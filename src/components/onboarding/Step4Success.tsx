@@ -1,10 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppDispatch } from '../../store/hooks'
 import { completeOnboarding } from '../../store/slices/onboardingSlice'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { CheckCircle2 } from 'lucide-react'
+import { ROUTES } from '../../constants'
+
+const REDIRECT_DELAY_MS = 2000
 
 const Step4Success = () => {
   const dispatch = useAppDispatch()
@@ -13,18 +16,18 @@ const Step4Success = () => {
   useEffect(() => {
     // Mark onboarding as completed
     dispatch(completeOnboarding())
-    
-    // Redirect to home after 2 seconds
+
+    // Redirect to home after delay
     const timer = setTimeout(() => {
-      navigate('/home')
-    }, 2000)
+      navigate(ROUTES.HOME)
+    }, REDIRECT_DELAY_MS)
 
     return () => clearTimeout(timer)
   }, [dispatch, navigate])
 
-  const handleGoToHome = () => {
-    navigate('/home')
-  }
+  const handleGoToHome = useCallback(() => {
+    navigate(ROUTES.HOME)
+  }, [navigate])
 
   return (
     <Card>

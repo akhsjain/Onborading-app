@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import OnboardingFlow from './pages/OnboardingFlow'
 import Home from './pages/Home'
 import ProtectedRoute from './components/ProtectedRoute'
+import { ROUTES } from './constants'
 
 function App() {
   const { isAuthenticated } = useAppSelector((state) => state.auth)
@@ -12,26 +13,29 @@ function App() {
   return (
     <Routes>
       <Route
-        path="/login"
-        element={isAuthenticated ? <Navigate to="/onboarding" replace /> : <Login />}
+        path={ROUTES.LOGIN}
+        element={isAuthenticated ? <Navigate to={ROUTES.ONBOARDING} replace /> : <Login />}
       />
       <Route
-        path="/onboarding/*"
+        path={`${ROUTES.ONBOARDING}/*`}
         element={
           <ProtectedRoute>
-            {isCompleted ? <Navigate to="/home" replace /> : <OnboardingFlow />}
+            {isCompleted ? <Navigate to={ROUTES.HOME} replace /> : <OnboardingFlow />}
           </ProtectedRoute>
         }
       />
       <Route
-        path="/home"
+        path={ROUTES.HOME}
         element={
           <ProtectedRoute>
-            {!isCompleted ? <Navigate to="/onboarding" replace /> : <Home />}
+            {!isCompleted ? <Navigate to={ROUTES.ONBOARDING} replace /> : <Home />}
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={<Navigate to={isAuthenticated ? "/onboarding" : "/login"} replace />} />
+      <Route
+        path="/"
+        element={<Navigate to={isAuthenticated ? ROUTES.ONBOARDING : ROUTES.LOGIN} replace />}
+      />
     </Routes>
   )
 }

@@ -1,28 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-
-export interface PersonalProfile {
-  name: string
-  age: string
-  email: string
-  profilePicture: string | null
-}
-
-export interface PaymentInfo {
-  cardNumber: string
-  expiryDate: string
-  cvv: string
-}
-
-interface OnboardingState {
-  currentStep: number
-  isCompleted: boolean
-  step1: PersonalProfile | null
-  step2: string[] // favorite songs
-  step3: PaymentInfo | null
-}
+import type { OnboardingState, PersonalProfile, PaymentInfo } from '../../types'
+import { STORAGE_KEYS, ONBOARDING_STEPS } from '../../constants'
+import { getStorageItem, setStorageItem, removeStorageItem } from '../../utils/storage'
 
 const initialState: OnboardingState = {
-  currentStep: 1,
+  currentStep: ONBOARDING_STEPS.PERSONAL_PROFILE,
   isCompleted: false,
   step1: null,
   step2: [],
@@ -31,15 +13,12 @@ const initialState: OnboardingState = {
 
 // Load from localStorage on initialization
 const loadOnboardingState = (): OnboardingState => {
-  try {
-    const stored = localStorage.getItem('onboardingState')
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch (error) {
-    console.error('Error loading onboarding state:', error)
-  }
-  return initialState
+  return getStorageItem<OnboardingState>(STORAGE_KEYS.ONBOARDING_STATE) ?? initialState
+}
+
+// Helper function to persist state to localStorage
+const persistState = (state: OnboardingState): void => {
+  setStorageItem(STORAGE_KEYS.ONBOARDING_STATE, state)
 }
 
 const onboardingSlice = createSlice({
@@ -48,31 +27,31 @@ const onboardingSlice = createSlice({
   reducers: {
     setCurrentStep: (state, action: PayloadAction<number>) => {
       state.currentStep = action.payload
-      localStorage.setItem('onboardingState', JSON.stringify(state))
+      persistState(state)
     },
     updateStep1: (state, action: PayloadAction<PersonalProfile>) => {
       state.step1 = action.payload
-      localStorage.setItem('onboardingState', JSON.stringify(state))
+      persistState(state)
     },
     updateStep2: (state, action: PayloadAction<string[]>) => {
       state.step2 = action.payload
-      localStorage.setItem('onboardingState', JSON.stringify(state))
+      persistState(state)
     },
     updateStep3: (state, action: PayloadAction<PaymentInfo>) => {
       state.step3 = action.payload
-      localStorage.setItem('onboardingState', JSON.stringify(state))
+      persistState(state)
     },
     completeOnboarding: (state) => {
       state.isCompleted = true
-      localStorage.setItem('onboardingState', JSON.stringify(state))
+      persistState(state)
     },
     resetOnboarding: (state) => {
-      state.currentStep = 1
+      state.currentStep = ONBOARDING_STEPS.PERSONAL_PROFILE
       state.isCompleted = false
       state.step1 = null
       state.step2 = []
       state.step3 = null
-      localStorage.removeItem('onboardingState')
+      removeStorageItem(STORAGE_KEYS.ONBOARDING_STATE)
     },
   },
 })
@@ -85,4 +64,6 @@ export const {
   completeOnboarding,
   resetOnboarding,
 } = onboardingSlice.actions
+
+export type { OnboardingState, PersonalProfile, PaymentInfo }
 export default onboardingSlice.reducer

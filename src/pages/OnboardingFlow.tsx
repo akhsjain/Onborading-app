@@ -6,6 +6,7 @@ import Step1PersonalProfile from '../components/onboarding/Step1PersonalProfile'
 import Step2FavoriteSongs from '../components/onboarding/Step2FavoriteSongs'
 import Step3PaymentInfo from '../components/onboarding/Step3PaymentInfo'
 import Step4Success from '../components/onboarding/Step4Success'
+import { ONBOARDING_STEPS } from '../constants'
 
 const OnboardingFlow = () => {
   const { currentStep } = useAppSelector((state) => state.onboarding)
@@ -23,7 +24,7 @@ const OnboardingFlow = () => {
     const stepMatch = path.match(/step(\d+)/)
     if (stepMatch) {
       const step = parseInt(stepMatch[1], 10)
-      if (step !== currentStep) {
+      if (step !== currentStep && step >= 1 && step <= ONBOARDING_STEPS.TOTAL_STEPS) {
         dispatch(setCurrentStep(step))
       }
     }
@@ -40,13 +41,11 @@ const OnboardingFlow = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            {[1, 2, 3, 4].map((step) => (
+            {Array.from({ length: ONBOARDING_STEPS.TOTAL_STEPS }, (_, i) => i + 1).map((step) => (
               <div
                 key={step}
                 className={`flex-1 h-2 rounded-full ${
-                  step <= currentStep
-                    ? 'bg-primary'
-                    : 'bg-gray-200'
+                  step <= currentStep ? 'bg-primary' : 'bg-gray-200'
                 }`}
               />
             ))}

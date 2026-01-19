@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useFormik } from 'formik'
 import { z } from 'zod'
 import { useAppSelector, useAppDispatch } from '../../store/hooks'
@@ -8,6 +9,7 @@ import { Label } from '../ui/label'
 import { Button } from '../ui/button'
 import { useNavigate } from 'react-router-dom'
 import { toFormikErrors } from '../../lib/zodFormikAdapter'
+import { VALIDATION_LIMITS, ONBOARDING_STEPS } from '../../constants'
 
 const validationSchema = z.object({
   cardNumber: z
@@ -16,10 +18,10 @@ const validationSchema = z.object({
     .refine(
       (value: string) => {
         const digitsOnly = value.replace(/\s/g, '')
-        return /^\d{16}$/.test(digitsOnly)
+        return new RegExp(`^\\d{${VALIDATION_LIMITS.CARD_NUMBER_LENGTH}}$`).test(digitsOnly)
       },
       {
-        message: 'Card number must be 16 digits',
+        message: `Card number must be ${VALIDATION_LIMITS.CARD_NUMBER_LENGTH} digits`,
       }
     ),
   expiryDate: z
@@ -61,7 +63,10 @@ const validationSchema = z.object({
   cvv: z
     .string()
     .min(1, 'CVV is required')
-    .regex(/^\d{3,4}$/, 'CVV must be 3 or 4 digits'),
+    .regex(
+      new RegExp(`^\\d{${VALIDATION_LIMITS.CVV_MIN_LENGTH},${VALIDATION_LIMITS.CVV_MAX_LENGTH}}$`),
+      `CVV must be ${VALIDATION_LIMITS.CVV_MIN_LENGTH} or ${VALIDATION_LIMITS.CVV_MAX_LENGTH} digits`
+    ),
 })
 
 const Step3PaymentInfo = () => {
@@ -79,58 +84,65 @@ const Step3PaymentInfo = () => {
     onSubmit: (values) => {
       // Format card number with spaces
       const formattedCardNumber = values.cardNumber.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim()
-      dispatch(updateStep3({
-        cardNumber: formattedCardNumber,
-        expiryDate: values.expiryDate,
-        cvv: values.cvv,
-      }))
-      dispatch(setCurrentStep(4))
-      navigate('/onboarding/step4')
+      dispatch(
+        updateStep3({
+          cardNumber: formattedCardNumber,
+          expiryDate: values.expiryDate,
+          cvv: values.cvv,
+        })
+      )
+      dispatch(setCurrentStep(ONBOARDING_STEPS.SUCCESS))
+      navigate(`/onboarding/step${ONBOARDING_STEPS.SUCCESS}`)
     },
   })
 
-  const formatCardNumber = (value: string) => {
+  const formatCardNumber = useCallback((value: string): string => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '')
-    const matches = v.match(/\d{4,16}/g)
+    const matches = v.match(new RegExp(`\\d{4,${VALIDATION_LIMITS.CARD_NUMBER_LENGTH}}`, 'g'))
     const match = (matches && matches[0]) || ''
-    const parts = []
+    const parts: string[] = []
     for (let i = 0, len = match.length; i < len; i += 4) {
       parts.push(match.substring(i, i + 4))
     }
-    if (parts.length) {
-      return parts.join(' ')
-    } else {
-      return v
-    }
-  }
+    return parts.length > 0 ? parts.join(' ') : v
+  }, [])
 
-  const formatExpiryDate = (value: string) => {
+  const formatExpiryDate = useCallback((value: string): string => {
     const v = value.replace(/\s+/g, '').replace(/\D/g, '')
     if (v.length >= 2) {
-      return v.substring(0, 2) + '/' + v.substring(2, 4)
+      return `${v.substring(0, 2)}/${v.substring(2, 4)}`
     }
     return v
-  }
+  }, [])
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCardNumber(e.target.value)
-    formik.setFieldValue('cardNumber', formatted)
-  }
+  const handleCardNumberChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatCardNumber(e.target.value)
+      formik.setFieldValue('cardNumber', formatted)
+    },
+    [formatCardNumber, formik]
+  )
 
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatExpiryDate(e.target.value)
-    formik.setFieldValue('expiryDate', formatted)
-  }
+  const handleExpiryDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatExpiryDate(e.target.value)
+      formik.setFieldValue('expiryDate', formatted)
+    },
+    [formatExpiryDate, formik]
+  )
 
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value.replace(/\D/g, '').substring(0, 4)
-    formik.setFieldValue('cvv', v)
-  }
+  const handleCvvChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const v = e.target.value.replace(/\D/g, '').substring(0, VALIDATION_LIMITS.CVV_MAX_LENGTH)
+      formik.setFieldValue('cvv', v)
+    },
+    [formik]
+  )
 
-  const handleBack = () => {
-    dispatch(setCurrentStep(2))
-    navigate('/onboarding/step2')
-  }
+  const handleBack = useCallback(() => {
+    dispatch(setCurrentStep(ONBOARDING_STEPS.FAVORITE_SONGS))
+    navigate(`/onboarding/step${ONBOARDING_STEPS.FAVORITE_SONGS}`)
+  }, [dispatch, navigate])
 
   return (
     <Card>

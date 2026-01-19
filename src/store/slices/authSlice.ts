@@ -1,9 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-
-interface AuthState {
-  isAuthenticated: boolean
-  username: string | null
-}
+import type { AuthState } from '../../types'
+import { STORAGE_KEYS } from '../../constants'
+import { getStorageItem, setStorageItem, removeStorageItem } from '../../utils/storage'
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -12,15 +10,7 @@ const initialState: AuthState = {
 
 // Load from localStorage on initialization
 const loadAuthState = (): AuthState => {
-  try {
-    const stored = localStorage.getItem('authState')
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch (error) {
-    console.error('Error loading auth state:', error)
-  }
-  return initialState
+  return getStorageItem<AuthState>(STORAGE_KEYS.AUTH_STATE) ?? initialState
 }
 
 const authSlice = createSlice({
@@ -30,15 +20,16 @@ const authSlice = createSlice({
     login: (state, action: PayloadAction<string>) => {
       state.isAuthenticated = true
       state.username = action.payload
-      localStorage.setItem('authState', JSON.stringify(state))
+      setStorageItem(STORAGE_KEYS.AUTH_STATE, state)
     },
     logout: (state) => {
       state.isAuthenticated = false
       state.username = null
-      localStorage.removeItem('authState')
+      removeStorageItem(STORAGE_KEYS.AUTH_STATE)
     },
   },
 })
 
 export const { login, logout } = authSlice.actions
+export type { AuthState }
 export default authSlice.reducer

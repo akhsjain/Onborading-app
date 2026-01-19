@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useFormik } from 'formik'
 import { z } from 'zod'
 import { useAppSelector, useAppDispatch } from '../../store/hooks'
@@ -9,6 +9,7 @@ import { Label } from '../ui/label'
 import { Button } from '../ui/button'
 import { useNavigate } from 'react-router-dom'
 import { toFormikErrors } from '../../lib/zodFormikAdapter'
+import { VALIDATION_LIMITS, ONBOARDING_STEPS } from '../../constants'
 
 const validationSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -16,12 +17,15 @@ const validationSchema = z.object({
     .string()
     .min(1, 'Age is required')
     .regex(/^\d+$/, 'Age must be a number')
-    .refine((val: string) => {
-      const ageNum = parseInt(val)
-      return ageNum >= 1 && ageNum <= 150
-    }, {
-      message: 'Age must be between 1 and 150',
-    }),
+    .refine(
+      (val: string) => {
+        const ageNum = parseInt(val, 10)
+        return ageNum >= VALIDATION_LIMITS.MIN_AGE && ageNum <= VALIDATION_LIMITS.MAX_AGE
+      },
+      {
+        message: `Age must be between ${VALIDATION_LIMITS.MIN_AGE} and ${VALIDATION_LIMITS.MAX_AGE}`,
+      }
+    ),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -40,22 +44,24 @@ const Step1PersonalProfile = () => {
 
   const formik = useFormik({
     initialValues: {
-      name: step1?.name || '',
-      age: step1?.age || '',
-      email: step1?.email || '',
+      name: step1?.name ?? '',
+      age: step1?.age ?? '',
+      email: step1?.email ?? '',
     },
     validate: (values) => toFormikErrors(validationSchema, values),
     onSubmit: (values) => {
-      dispatch(updateStep1({
-        ...values,
-        profilePicture,
-      }))
-      dispatch(setCurrentStep(2))
-      navigate('/onboarding/step2')
+      dispatch(
+        updateStep1({
+          ...values,
+          profilePicture,
+        })
+      )
+      dispatch(setCurrentStep(ONBOARDING_STEPS.FAVORITE_SONGS))
+      navigate(`/onboarding/step${ONBOARDING_STEPS.FAVORITE_SONGS}`)
     },
   })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       const reader = new FileReader()
@@ -64,7 +70,14 @@ const Step1PersonalProfile = () => {
       }
       reader.readAsDataURL(file)
     }
-  }
+  }, [])
+
+  const handleRemovePicture = useCallback(() => {
+    setProfilePicture(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [])
 
   return (
     <Card>
@@ -159,12 +172,7 @@ const Step1PersonalProfile = () => {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      setProfilePicture(null)
-                      if (fileInputRef.current) {
-                        fileInputRef.current.value = ''
-                      }
-                    }}
+                    onClick={handleRemovePicture}
                   >
                     Remove
                   </Button>

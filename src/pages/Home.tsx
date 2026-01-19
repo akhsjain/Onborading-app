@@ -1,9 +1,11 @@
+import { useCallback } from 'react'
 import { useAppSelector, useAppDispatch } from '../store/hooks'
 import { logout } from '../store/slices/authSlice'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
+import { ROUTES } from '../constants'
 
 const Home = () => {
   const { username } = useAppSelector((state) => state.auth)
@@ -11,10 +13,10 @@ const Home = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     dispatch(logout())
-    navigate('/login')
-  }
+    navigate(ROUTES.LOGIN)
+  }, [dispatch, navigate])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
