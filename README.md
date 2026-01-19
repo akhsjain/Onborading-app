@@ -1,6 +1,6 @@
 # Onboarding App
 
-A complete onboarding flow application built with React, Redux, Formik, and shadcn/ui components.
+A complete onboarding flow application built with React, Redux, Formik, and custom UI components.
 
 ## Features
 
@@ -120,7 +120,6 @@ These credentials are displayed on the login page for easy reference.
 - React Router
 - Formik + Zod
 - Tailwind CSS
-- shadcn/ui components
 - Vite
 
 ## Project Structure
